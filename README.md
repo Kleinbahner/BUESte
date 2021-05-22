@@ -18,7 +18,7 @@ Manual for boxes: to follow, [drilling template](https://github.com/Kleinbahner/
 
 Manual for detector: to follow
 
-## software
+## Software
 
 ## Configuration
 
