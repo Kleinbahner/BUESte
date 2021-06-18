@@ -14,7 +14,7 @@ Lists are also stored [here](https://github.com/Kleinbahner/BUESte/tree/main/doc
 ## Manuals:
 Manual for main pcb assembly: [main pcb manual](https://github.com/Kleinbahner/BUESte/blob/main/doc/Manual%20(DE)%20Bahn%C3%BCbergang%20Platine%20v2.pdf)
 
-Manual for boxes: to follow, [drilling template](https://github.com/Kleinbahner/BUESte/blob/main/doc/drill%20template%20bue.pdf)
+Manual for boxes: [boxes manual](https://github.com/Kleinbahner/BUESte/blob/main/doc/Manual-DE-Box.pdf), [drilling template](https://github.com/Kleinbahner/BUESte/blob/main/doc/drill%20template%20bue.pdf)
 
 Manual for detector: to follow
 
