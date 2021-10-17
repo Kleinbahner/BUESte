@@ -25,7 +25,7 @@
 
 #include <EEPROM.h>
 
-//#define DFFast
+#define DFFast
 
 #include <avr/pgmspace.h> // Wird zum Ablegen von Werten im FLASH benoetigt
 
@@ -526,7 +526,7 @@ void setup() {
 
   #ifdef DEBUG
     Serial.begin(115200);
-    DEBUG_PRINTLN("BÜ v2.1.2 (C) JBec");
+    DEBUG_PRINTLN("BÜ v2.1.3 (C) JBec");
   #endif
 
 // Verbindung zum DFPlayer mini
