@@ -1,31 +1,84 @@
-/* Bahnuebergangsteuerung v2.1.3 (C) Jens Becker
+/* Bahnuebergangsteuerung v2.1.4 (C) Jens Becker
  *  
  *  Unterstützt nur die Hardware Version 03/21 der Bahnübergangssteuerung BÜSte
  *  
  *  Treiber fuer den PWM-Chip von Adafruit https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/archive/master.zip
- *
- *  Debouncing der Tasten ueber Button(carlynorma) Bibliothek https://github.com/carlynorama/Arduino-Library-Button/
+ * 
+ *  Debouncing der Tasten mit der Bounce2 Bibliothek https://github.com/thomasfredericks/Bounce2
  *
  *  Audiowiedergabe über DFPlayer mini MP3-Modul mit Bibliothek PowerBroker2 https://github.com/PowerBroker2/DFPlayerMini_Fast
  * 
  *  DFlayerMini_Fast library requires FireTimer lib https://github.com/PowerBroker2/FireTimer
  *
- *  storing EEPROM values requires CRC32 library  *https://downloads.arduino.cc/libraries/github.com/bakercp/CRC32-2.0.0.zip //disbled DK
+ *  storing EEPROM values requires CRC32 library  *https://downloads.arduino.cc/libraries/github.com/bakercp/CRC32-2.0.0.zip // Disabled DKap
 */
-/*
- * changes DK:
- * 150421: removed CRC from EEPROM storing
- * 160421: UT1/UT2 removed as state and handled seperate form states
- * 180421: Servo variables scaleable by changing NUM_OF_SCHRANKEN, no code change necessary
- * 190421: servo setup also scaleable upto 4 servos with indication of which setting on the other 4 LED
- * 190421: UT2 also detected on servo setup
- * 200421: delay Schranke implemented
- * 211016: DFFast driver 
- */
+//##########################################################################
+//#
+//#   Version History:
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.4 date: 2022/02/27 author: JBec
+//#
+//# Added:
+//#   - Changed Deboucing-Lib to Button2 
+//#     https://github.com/thomasfredericks/Bounce2
+//#   - Removed forced Servo setup if EEPROM data was wrong
+//#   - LED test at startup
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.3 date: 2021/10/16 author: DKap
+//#
+//# Added:
+//#   - DFFast driver, for other models DFmini is required
+//#     --> #define DFFast
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.2 date: 2021/04/20 author: DKap
+//#
+//# Added:
+//#   - delay Schranke implemended
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.2 date: 2021/04/19 author: DKap
+//#
+//# Added:
+//#   - UT2 also detected on servo setup
+//#   - Servo setup also scalable up to 4 servos with indication of which 
+//#     setting on the other 4 LED
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.2 date: 2021/04/18 author: DKap
+//#
+//# Added:
+//#   - Servo variables scalable by changing NUM_OF_SCHRANKEN, no code
+//#     change necessary
+//#
+//#-------------------------------------------------------------------------
+//#
+//#  Version: 2.1.2 date: 2021/04/15 author: DKap
+//#
+//# Added:
+//#   - removed CRC from EEPROM storing
+//#
+//#-------------------------------------------------------------------------
+
+
+const int VERSION_MAJOR = 2;
+const int VERSION_MINOR = 1;
+const int VERSION_PATCH = 4;
+
+//==========================================================================
+//
+//    I N C L U D E S
+//
+//==========================================================================
 
 #include <EEPROM.h>
-
-#define DFFast
 
 #include <avr/pgmspace.h> // Wird zum Ablegen von Werten im FLASH benoetigt
 
@@ -34,7 +87,13 @@
 #include <Adafruit_PWMServoDriver.h>
 
 // Debouncing of inputs
-#include <Button.h>
+#include <Bounce2.h>
+
+// CRC32 1.1.0 (Christopher Baker)
+#include <CRC32.h>
+
+// Uncomment if sound is not working
+//#define DFFast
 
 // DFPlayer mini fast
 #ifdef DFFast
@@ -43,6 +102,13 @@
   #include <DFRobotDFPlayerMini.h>
 #endif
 #include <SoftwareSerial.h>
+
+
+//==========================================================================
+//
+//    D E F I N I T I O N S
+//
+//==========================================================================
 
 // enable Debug-Output on serial interface
 #define DEBUG
@@ -57,7 +123,7 @@
  #define DEBUG_PRINTLN(x) 
 #endif
 
-#define SW_VERSION 1
+#define SW_VERSION 1  // For EEPROM data, data will be set to default value is not the same
 
 // Ausgangspins
 #define blink1_OUT 15     // hier wird das erste Blinklicht angeschlossen
@@ -87,16 +153,16 @@
 
 #define volume_PIN A6                // Anschluss fuer den Poti zur Lautstärkeregelung
 
-// Eingänge konfigurieren
-Button ET = Button(ET_PIN, LOW);            // Einschalttaster
-Button UT1 = Button(UT1_PIN, LOW);          // Unwirksamkeitstaster rechts
-Button UT2 = Button(UT2_PIN, LOW);          // Unwirksamkeitstaster links
-Button AT = Button(AT_PIN, LOW);            // Ausschalttaster
-Button RS = Button(RS_PIN, LOW);            // Rangierschalter
-Button Strom1 = Button(Strom1_PIN, LOW);    // Stromsensor rechts
-Button Strom2 = Button(Strom2_PIN, LOW);    //Stromsensor links
-//Button LS = Button(LS_PIN, HIGH);           // Freimeldung des Bahnübergangs
-Button LS = Button(LS_PIN, LOW);           // Freimeldung des Bahnübergangs
+// Define Button objects
+Bounce2::Button ET = Bounce2::Button();            // Einschalttaster
+Bounce2::Button UT1 = Bounce2::Button();          // Unwirksamkeitstaster rechts
+Bounce2::Button UT2 = Bounce2::Button();          // Unwirksamkeitstaster links
+Bounce2::Button AT = Bounce2::Button();            // Ausschalttaster
+Bounce2::Button RS = Bounce2::Button();            // Rangierschalter
+Bounce2::Button Strom1 = Bounce2::Button();    // Stromsensor rechts
+Bounce2::Button Strom2 = Bounce2::Button();    //Stromsensor links
+Bounce2::Button LS = Bounce2::Button();           // Freimeldung des Bahnübergangs
+
 
 // Variablen fuer das Blinklicht
 int brightnessBlink1 = 0;      // Helligkeit fuer das erste Blinklicht
@@ -180,9 +246,6 @@ SoftwareSerial mySoftwareSerial(DFPlayer_RX, DFPlayer_TX); // RX, TX
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-// CRC32 1.1.0 (Christopher Baker)
-#include <CRC32.h>
-
 typedef struct  {
    int      PosUnten;        // Position der Stellung "Unten"
    int      PosOben;         // Position der Stellung "Oben"  
@@ -234,13 +297,17 @@ void setEEPROMDefaults() {
 
 void showEEPROMValues(uint8_t pin)
   {
-  DEBUG_PRINT("Ver : ");
+  DEBUG_PRINT("SW-Version: ");
   DEBUG_PRINTLN(eepromData.swversion);
-  DEBUG_PRINT("Pin : ");
+  DEBUG_PRINT("Pin       : ");
   DEBUG_PRINTLN(pin);
+  DEBUG_PRINT("Up        : ");
   DEBUG_PRINTLN(eepromData.payload.schranke[pin].PosUnten);
+  DEBUG_PRINT("Down      : ");
   DEBUG_PRINTLN(eepromData.payload.schranke[pin].PosOben);
+  DEBUG_PRINT("Speed     : ");
   DEBUG_PRINTLN(eepromData.payload.schranke[pin].updateInterval);
+  DEBUG_PRINT("Downdelay : ");
   DEBUG_PRINTLN(eepromData.payload.schranke[pin].downdelay);
 
 }
@@ -488,7 +555,7 @@ void enableFrei() {
 }
 
 boolean checkFrei() {
-  if (LS.onPress()) {
+  if (LS.pressed()) {
    previousFreiMillis = currentMillis;
    return false;
   }
@@ -510,23 +577,49 @@ void StoreToEEPROM() {
   EEPROM.put(0, eepromData);
 }
 
+
+//**********************************************************************
+//  setup
+//
 void setup() {
   // put your setup code here, to run once:
-  
-  pinMode(ET_PIN, INPUT_PULLUP);
-  pinMode(UT1_PIN, INPUT_PULLUP);
-  pinMode(UT2_PIN, INPUT_PULLUP);
-  pinMode(AT_PIN, INPUT_PULLUP);
-  pinMode(RS_PIN, INPUT_PULLUP);
-  pinMode(Strom1_PIN, INPUT_PULLUP);
-  pinMode(Strom2_PIN, INPUT_PULLUP);
-  pinMode(LS_PIN, INPUT_PULLUP);
+
+  // BUTTON SETUP
+  ET.attach(ET_PIN, INPUT_PULLUP);            // Einschalttaster
+  ET.setPressedState(LOW);
+  UT1.attach(UT1_PIN, INPUT_PULLUP);          // Unwirksamkeitstaster rechts
+  UT1.setPressedState(LOW);
+  UT2.attach(UT2_PIN, INPUT_PULLUP);           // Unwirksamkeitstaster links
+  UT2.setPressedState(LOW);
+  AT.attach(AT_PIN, INPUT_PULLUP);             // Ausschalttaster
+  AT.setPressedState(LOW);
+  RS.attach(RS_PIN, INPUT_PULLUP);             // Rangierschalter
+  RS.setPressedState(LOW);
+  Strom1.attach(Strom1_PIN, INPUT_PULLUP);     // Stromsensor rechts
+  Strom1.setPressedState(LOW);
+  Strom2.attach(Strom2_PIN, INPUT_PULLUP);     //Stromsensor links
+  Strom2.setPressedState(LOW);
+
+// Only one of the following two options should be active
+// Lichtschranke HIGH active (e.g. IS 471)
+  LS.attach(LS_PIN, INPUT);            // Lichtschranke HIGH active
+  LS.setPressedState(HIGH);            // Lichtschranke HIGH active
+// Lichtschranke LOW active
+//  LS.attach(LS_PIN, INPUT_PULLUP);     // Lichtschranke LOW active
+//  LS.setPressedState(LOW);             // Lichtschranke LOW active
+
 
   pinMode(volume_PIN, INPUT);
 
   #ifdef DEBUG
     Serial.begin(115200);
-    DEBUG_PRINTLN("BÜ v2.1.3 (C) JBec");
+    DEBUG_PRINT("BÜ v");
+    DEBUG_PRINT(VERSION_MAJOR);
+    DEBUG_PRINT(".");
+    DEBUG_PRINT(VERSION_MINOR);
+    DEBUG_PRINT(".");
+    DEBUG_PRINT(VERSION_PATCH);
+    DEBUG_PRINTLN(" (C) JBec, DKap");
   #endif
 
 // Verbindung zum DFPlayer mini
@@ -547,6 +640,25 @@ void setup() {
   pwm.begin();
   pwm.setPWMFreq(60);
 
+  // Test lights
+  pwm.setPWM(blink1_OUT, 0, AN); 
+  pwm.setPWM(blink2_OUT, 0, AN);
+  pwm.setPWM(blink3_OUT, 0, AN);
+  pwm.setPWM(blink4_OUT, 0, AN);
+  pwm.setPWM(uebsig1_OUT, 0, AN);
+  pwm.setPWM(uebsig2_OUT, 0, AN);
+  pwm.setPWM(UT1_Status_OUT, 0, AN);
+  pwm.setPWM(UT2_Status_OUT, 0, AN);
+  delay(1000);
+  pwm.setPWM(blink1_OUT, 0, AUS); 
+  pwm.setPWM(blink2_OUT, 0, AUS);
+  pwm.setPWM(blink3_OUT, 0, AUS);
+  pwm.setPWM(blink4_OUT, 0, AUS);
+  pwm.setPWM(uebsig1_OUT, 0, AUS);
+  pwm.setPWM(uebsig2_OUT, 0, AUS);
+  pwm.setPWM(UT1_Status_OUT, 0, AUS);
+  pwm.setPWM(UT2_Status_OUT, 0, AUS);
+
   if (digitalRead(UT1_PIN)==LOW || digitalRead(UT2_PIN)==LOW) {   // Wird beim Start eine der UT-Tasten gedrückt, so beginnt die Routine für die Einstellung der Servo Positionen
     servoSetup = true;
     setup_servo = 99; 
@@ -561,10 +673,10 @@ void setup() {
   if (eepromData.swversion != SW_VERSION) { //reset if version update of EEPROM data 
     DEBUG_PRINTLN("Reset EEPROM data");
     
-    // TODO: invalid CRC, reset values to defaults/go to setup mode/do whatever...
+    // invalid CRC, reset values to defaults/go to setup mode/do whatever...
     setEEPROMDefaults();
-    servoSetup = true; 
-    setup_servo = 99; 
+    //servoSetup = true; 
+    //setup_servo = 99; 
   } 
 
  for (uint8_t i = 0; i < NUM_OF_SCHRANKEN; ++i) {
@@ -578,15 +690,16 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   // Buttonwerte abfragen
-  ET.listen();
-  UT1.listen();
-  UT2.listen();
-  AT.listen();
-  RS.listen();
-  Strom1.listen();
-  Strom2.listen();
-  LS.listen();
 
+  ET.update();
+  UT1.update();
+  UT2.update();
+  AT.update();
+  RS.update();
+  Strom1.update();
+  Strom2.update();
+  LS.update();
+  
   //read in volume poti and set DFPlayer volume
   sensorValue = analogRead(volume_PIN);
   if (!(volumeValue == map(sensorValue, 0, 1023, 0, 30))) { //only on change
@@ -595,6 +708,7 @@ void loop() {
     //DEBUG_PRINTLN(volumeValue);
     myDFPlayer.volume(volumeValue);  //Set volume value. From 0 to 30
   }
+  
   // Aktuelle Zeit speichern
   currentMillis = millis();
 
@@ -604,16 +718,16 @@ void loop() {
     //DEBUG_PRINTLN(setup_servo);
    switch(setup_servo) {
     case 99: {
-      DEBUG_PRINTLN("Setup");
+      DEBUG_PRINTLN("Servo setup");
       //DEBUG_PRINTLN("Servo 0:"); 
-      DEBUG_PRINTLN("left");
+      DEBUG_PRINTLN("up");
       servoSetupState = 1;
       setup_servo = 0;
       pwm.setPWM(blink1_OUT, 0, AN); // an
       pwm.setPWM(blink2_OUT, 0, AUS); // aus
       pwm.setPWM(blink3_OUT, 0, AUS); // aus
       pwm.setPWM(blink4_OUT, 0, AUS); // aus
-      pwm.setPWM(uebsig1_OUT, 0, AN); // aus
+      pwm.setPWM(uebsig1_OUT, 0, AN); // an Indicate "down" setup
       pwm.setPWM(uebsig2_OUT, 0, AUS); // aus
       pwm.setPWM(UT1_Status_OUT, 0, AUS); // aus
       pwm.setPWM(UT2_Status_OUT, 0, AUS); // aus 
@@ -623,31 +737,33 @@ void loop() {
     //case 2:
     //case 3:
       {
+      //DEBUG_PRINT("Servo ");
+      //DEBUG_PRINTLN(setup_servo);
       switch(servoSetupState) {
         case 1:
-          //DEBUG_PRINTLN("left");
+          //DEBUG_PRINTLN("down");
           
-          if (ET.onPress()) {DEBUG_PRINTLN("+5");setUnten(setup_servo,+5);};
-          if (AT.onPress()) {DEBUG_PRINTLN("-5");setUnten(setup_servo,-5);};
+          if (ET.pressed()) {DEBUG_PRINTLN("+5");setUnten(setup_servo,+5);};
+          if (AT.pressed()) {DEBUG_PRINTLN("-5");setUnten(setup_servo,-5);};
           
           gotoUnten(setup_servo);
     
-          if (UT1.onPress() || UT2.onPress() ) {
-            DEBUG_PRINTLN("right");
+          if (UT1.pressed() || UT2.pressed() ) {
+            DEBUG_PRINTLN("up");
             servoSetupState=2;
             pwm.setPWM(uebsig1_OUT, 0, AUS); // aus
-            pwm.setPWM(uebsig2_OUT, 0, AN); // indicate right setup
+            pwm.setPWM(uebsig2_OUT, 0, AN); // indicate "up" setup
             }
           break;
     
         case 2:
           
-          if (ET.onPress()) {DEBUG_PRINTLN("+5");setOben(setup_servo,+5);};
-          if (AT.onPress()) {DEBUG_PRINTLN("-5");setOben(setup_servo,-5);};
+          if (ET.pressed()) {DEBUG_PRINTLN("+5");setOben(setup_servo,+5);};
+          if (AT.pressed()) {DEBUG_PRINTLN("-5");setOben(setup_servo,-5);};
     
           gotoOben(setup_servo);
           
-          if (UT1.onPress() || UT2.onPress() ) {
+          if (UT1.pressed() || UT2.pressed() ) {
             DEBUG_PRINTLN("speed");
             servoSetupState=3;
             pwm.setPWM(uebsig2_OUT, 0, AUS); // aus
@@ -657,12 +773,12 @@ void loop() {
     
         case 3:
           
-          if (ET.onPress()) {DEBUG_PRINTLN("+1");setInterval(setup_servo,+1);};
-          if (AT.onPress()) {DEBUG_PRINTLN("-1");setInterval(setup_servo,-1);};
+          if (ET.pressed()) {DEBUG_PRINTLN("+1");setInterval(setup_servo,+1);};
+          if (AT.pressed()) {DEBUG_PRINTLN("-1");setInterval(setup_servo,-1);};
     
           Sweep(setup_servo);
           
-          if (UT1.onPress() || UT2.onPress() ) {
+          if (UT1.pressed() || UT2.pressed() ) {
             DEBUG_PRINTLN("delay");
             servoSetupState=4;
             pwm.setPWM(UT1_Status_OUT, 0, AUS); // aus
@@ -672,16 +788,16 @@ void loop() {
           
         case 4:
           
-          if (ET.onRelease()) {DEBUG_PRINTLN("+1");demoTheDelay = true;setdowndelay(setup_servo,+1);};
-          if (AT.onRelease()) {DEBUG_PRINTLN("-1");demoTheDelay = true;setdowndelay(setup_servo,-1);};
+          if (ET.released()) {DEBUG_PRINTLN("+1");demoTheDelay = true;setdowndelay(setup_servo,+1);};
+          if (AT.released()) {DEBUG_PRINTLN("-1");demoTheDelay = true;setdowndelay(setup_servo,-1);};
           
           demoDelay(setup_servo);
           
-          if (UT1.onPress() || UT2.onPress() ) { //after step 4, go to the next servo or to the end of the setup
+          if (UT1.pressed() || UT2.pressed() ) { //after step 4, go to the next servo or to the end of the setup
             servoSetupState=1;
             setup_servo++;
             if (setup_servo >= NUM_OF_SCHRANKEN) {setup_servo = 98;} //go to save the setup
-            pwm.setPWM(uebsig1_OUT, 0, AN); // left stage setup
+            pwm.setPWM(uebsig1_OUT, 0, AN); // down stage setup
             pwm.setPWM(UT2_Status_OUT, 0, AUS); // aus
             switch (setup_servo) {
               //case 0:
@@ -714,7 +830,7 @@ void loop() {
         StoreToEEPROM();
         servoSetup = false;
         servoSetupState = 1;
-        setup_servo++;
+        setup_servo = 0;
         state = 1;
         pwm.setPWM(blink1_OUT, 0, AUS); // aus
         pwm.setPWM(blink2_OUT, 0, AUS); // aus
@@ -739,33 +855,34 @@ void loop() {
       //DEBUG_PRINTLN("Ruhezustand");
       
       if (RS.isPressed()) {
+      //if (RS.pressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("BÜ schließen rangieren");
+        DEBUG_PRINTLN("1-->2");
         blinkLichtAn = true;
       }
-      else if (ET.onPress()) {
+      else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("BÜ schließen normal");
+        DEBUG_PRINTLN("1-->3 ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
-      else if ((isUT1TimeoutOn==false)&&(Strom1.onPress() || Strom1.isPressed() )) {
+      else if ((isUT1TimeoutOn==false)&&(Strom1.pressed() || Strom1.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("BÜ schließen normal");
+        DEBUG_PRINTLN("1-->3 Strom1");
         enableGrundsteller();
         blinkLichtAn = true;
       }
-      else if ((isUT2TimeoutOn==false)&&(Strom2.onPress() || Strom2.isPressed() )) {
+      else if ((isUT2TimeoutOn==false)&&(Strom2.pressed() || Strom2.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("BÜ schließen normal");
+        DEBUG_PRINTLN("1-->3 Strom2");
         enableGrundsteller();
         blinkLichtAn = true;
       }
-      else if (UT1.onPress()) {
+      else if (UT1.pressed()) {
         setUTTimeout(1);
         next_state = 1;
       }
-      else if (UT2.onPress()) {
+      else if (UT2.pressed()) {
         setUTTimeout(2);
         next_state = 1;
       }
@@ -781,7 +898,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ schließen rangieren");
       
       next_state = 4;
-      DEBUG_PRINTLN("BÜ geschlossen rangieren");
+      DEBUG_PRINTLN("2-->4");
       
       //start sound
       myDFPlayer.loop(1);
@@ -798,7 +915,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ schließen normal");
       
       next_state = 5;
-      DEBUG_PRINTLN("BÜ geschlossen normal");
+      DEBUG_PRINTLN("3-->5");
       
       //start sound
       //DEBUG_PRINTLN("Snd: loop");
@@ -819,10 +936,11 @@ void loop() {
       
       if (RS.isPressed()) {
         next_state = 4;
+        //DEBUG_PRINTLN("4-->4");
       }
       else {
        next_state = 9; 
-       DEBUG_PRINTLN("BÜ öffnen rangieren");
+       DEBUG_PRINTLN("4-->9");
       }
       
       break;
@@ -833,16 +951,16 @@ void loop() {
       
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("BÜ geschlossen rangieren");
+        DEBUG_PRINTLN("5-->4");
       }
-      else if (LS.onPress()) {
+      else if (LS.pressed()) {
        next_state = 6; 
-       DEBUG_PRINTLN("BÜ geschlossen befahren");
+       DEBUG_PRINTLN("5-->6");
        enableFrei();
       }
-      else if (AT.onPress() || checkGrundsteller() == true) {
+      else if (AT.pressed() || checkGrundsteller() == true) {
         next_state = 7;
-        DEBUG_PRINTLN("BÜ öffnen normal");
+        DEBUG_PRINTLN("5-->7 AT");
       }
       else {
         next_state = 5;
@@ -855,11 +973,11 @@ void loop() {
     
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("BÜ geschlossen rangieren");
+        DEBUG_PRINTLN("6-->4 RS");
       }
       else if (checkFrei()==true) {
        next_state = 7; 
-       DEBUG_PRINTLN("BÜ öffnen normal");
+       DEBUG_PRINTLN("6-->7");
       }
       else {
         next_state = 6;
@@ -871,13 +989,13 @@ void loop() {
       //DEBUG_PRINTLN("BÜ öffnen");
       
       next_state = 8;
-      DEBUG_PRINTLN("Ruhezeit");
+      DEBUG_PRINTLN("7-->8");
       blinkLichtAn = false;
       
       schrankenHoch = true;
       
       // stop sound
-      myDFPlayer.play(1);
+      //myDFPlayer.play(1);
       myDFPlayer.stop();
       
       enableRuhezeit();  // Starte Timer fuer Ruhezeit
@@ -890,23 +1008,23 @@ void loop() {
       
       if (RS.isPressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("BÜ schließen rangieren");
+        DEBUG_PRINTLN("8-->2 RS");
         blinkLichtAn = true;
       }
-      else if (ET.onPress()) {
+      else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("BÜ schließen normal");
+        DEBUG_PRINTLN("8-->3 ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if (checkRuhezeit()==true) {
         next_state = 1;
-        DEBUG_PRINTLN("Ruhezustand");
+        DEBUG_PRINTLN("8-->1 Ruhe");
       }
-      else if (UT1.onPress()) {
+      else if (UT1.pressed()) {
         setUTTimeout(1);
       }
-      else if (UT2.onPress()) {
+      else if (UT2.pressed()) {
         setUTTimeout(2);
       }
       else {
@@ -917,10 +1035,10 @@ void loop() {
     case 9:
       // Zustand: BUE oeffnen, rangieren
       // Zustandausgabe
-      // DEBUG_PRINTLN("BÜ öffnen, rangieren");
+      //DEBUG_PRINTLN("BÜ öffnen, rangieren");
       
       next_state = 1;
-      DEBUG_PRINTLN("Ruhezustand");
+      DEBUG_PRINTLN("9-->1");
       blinkLichtAn = false;
       
       schrankenHoch = true;
