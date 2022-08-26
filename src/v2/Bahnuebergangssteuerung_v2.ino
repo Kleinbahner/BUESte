@@ -21,7 +21,7 @@
 //#  Version: 2.1.4 date: 2022/02/27 author: JBec
 //#
 //# Added:
-//#   - Changed Deboucing-Lib to Button2 
+//#   - Changed Deboucing-Lib to Bounce2 
 //#     https://github.com/thomasfredericks/Bounce2
 //#   - Removed forced Servo setup if EEPROM data was wrong
 //#   - LED test at startup
@@ -857,34 +857,36 @@ void loop() {
       if (RS.isPressed()) {
       //if (RS.pressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("1-->2");
+        DEBUG_PRINTLN("1 Ruhezustand --> 2 BÜ schließen rangieren");
         blinkLichtAn = true;
       }
       else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("1-->3 ET");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if ((isUT1TimeoutOn==false)&&(Strom1.pressed() || Strom1.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("1-->3 Strom1");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, Strom1");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if ((isUT2TimeoutOn==false)&&(Strom2.pressed() || Strom2.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("1-->3 Strom2");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, Strom2");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if (UT1.pressed()) {
         setUTTimeout(1);
         next_state = 1;
+        DEBUG_PRINTLN("1 Ruhezustand --> 1 Ruhezustand, UT1");
       }
       else if (UT2.pressed()) {
         setUTTimeout(2);
         next_state = 1;
+        DEBUG_PRINTLN("1 Ruhezustand --> 1 Ruhezustand, UT2");
       }
       
       else {
@@ -898,7 +900,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ schließen rangieren");
       
       next_state = 4;
-      DEBUG_PRINTLN("2-->4");
+      DEBUG_PRINTLN("2 BÜ schließen rangieren --> 4 BÜ geschlossen rangieren");
       
       //start sound
       myDFPlayer.loop(1);
@@ -915,7 +917,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ schließen normal");
       
       next_state = 5;
-      DEBUG_PRINTLN("3-->5");
+      DEBUG_PRINTLN("3 BÜ schließen normal -->5 BÜ geschlossen normal");
       
       //start sound
       //DEBUG_PRINTLN("Snd: loop");
@@ -940,7 +942,7 @@ void loop() {
       }
       else {
        next_state = 9; 
-       DEBUG_PRINTLN("4-->9");
+       DEBUG_PRINTLN("4 BÜ geschlossen rangieren --> 9 BÜ öffnen rangieren");
       }
       
       break;
@@ -951,16 +953,16 @@ void loop() {
       
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("5-->4");
+        DEBUG_PRINTLN("5 BÜ geschlossen normal --> 4 BÜ geschlossen rangieren");
       }
       else if (LS.pressed()) {
        next_state = 6; 
-       DEBUG_PRINTLN("5-->6");
+       DEBUG_PRINTLN("5 BÜ geschlossen normal --> 6 BÜ geschlossen befahren");
        enableFrei();
       }
       else if (AT.pressed() || checkGrundsteller() == true) {
         next_state = 7;
-        DEBUG_PRINTLN("5-->7 AT");
+        DEBUG_PRINTLN("5 BÜ geschlossen normal --> 7 BÜ öffnen, AT");
       }
       else {
         next_state = 5;
@@ -973,11 +975,11 @@ void loop() {
     
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("6-->4 RS");
+        DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 4 BÜ geschlossen rangieren, RS");
       }
       else if (checkFrei()==true) {
        next_state = 7; 
-       DEBUG_PRINTLN("6-->7");
+       DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 7 BÜ öffnen");
       }
       else {
         next_state = 6;
@@ -989,7 +991,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ öffnen");
       
       next_state = 8;
-      DEBUG_PRINTLN("7-->8");
+      DEBUG_PRINTLN("7 BÜ öffnen --> 8 Ruhezeit");
       blinkLichtAn = false;
       
       schrankenHoch = true;
@@ -1008,18 +1010,18 @@ void loop() {
       
       if (RS.isPressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("8-->2 RS");
+        DEBUG_PRINTLN("8 Ruhezeit -->2 BÜ schließen rangieren, RS");
         blinkLichtAn = true;
       }
       else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("8-->3 ET");
+        DEBUG_PRINTLN("8 Ruhezeit -->3 BÜ schließen normal, ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if (checkRuhezeit()==true) {
         next_state = 1;
-        DEBUG_PRINTLN("8-->1 Ruhe");
+        DEBUG_PRINTLN("8 Ruhezeit --> 1 Ruhezustand");
       }
       else if (UT1.pressed()) {
         setUTTimeout(1);
@@ -1038,7 +1040,7 @@ void loop() {
       //DEBUG_PRINTLN("BÜ öffnen, rangieren");
       
       next_state = 1;
-      DEBUG_PRINTLN("9-->1");
+      DEBUG_PRINTLN("9 BÜ öffnen rangieren --> 1 Ruhezustand");
       blinkLichtAn = false;
       
       schrankenHoch = true;
