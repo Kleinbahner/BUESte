@@ -23,7 +23,7 @@ Manual for detector: to follow
 Manual for programming the Arduino: [Arduino programming](https://github.com/Kleinbahner/BUESte/blob/main/doc/Programmierung%20Arduino%20f%C3%BCr%20Bahn%C3%BCbergangssteuerung.pdf)
 
 ## Components
-The railroad crossing control unit consists of different components that can can be combined in various ways in order to suit the actual module layout requirements. The components will be described in more detail in the following sections.
+The railway crossing control unit consists of different components that can can be combined in various ways in order to suit the actual module layout requirements. The components will be described in more detail in the following sections.
 
 ### Mainboard
 
@@ -31,7 +31,7 @@ The main board is permanently installed near the railroad crossing. All other co
 
 ![Main board v1](/img/BUE_Mainboard_complete.jpg) ![Main board v2](/img/BUE_Mainboard_complete_v2.jpg)
 
-The flashing light signals for the railroad crossing and the servos for the fences can be connected via terminal blocks. The control inputs are connected to further terminal blocks. There is also an amplifier for connecting a loudspeaker. The sounds can be stored on a microSD card. Power is supplied via an USB socket.
+The flashing light signals for the railway crossing and the servos for the fences can be connected via terminal blocks. The control inputs are connected to further terminal blocks. There is also an amplifier for connecting a loudspeaker. The sounds can be stored on a microSD card. Power is supplied via an USB socket.
 
 The two RJ45 sockets are used to connect the other components via a looped-through cable. All components can be connected to the same cable in any order. Star cabling is also possible. Alternatively, the inputs and outputs can also be connected directly to the terminal blocks if they are installed in the same module.
 
@@ -71,7 +71,7 @@ The available signals and their meaning are listed here in detail. The output si
 | SD-Karte | - | - | Slot for SD card. The card has to contain the WAV file for the signal sound. Attention: There has to be a card in the slot with a WAV file called "ding.wav" in the main directory. Otherwise the control unit will not work! |
 
 #### Assignement of the bus cable
-A bus is used to connect the components further away from the main board. All the required signals are routed in a single multi-core cable. An RJ45 cable is used for this, as is widely used in computer network technology. Starting from the main board, all components are connected to each other. The boxes have three sockets and can therefore be used as splitters. All sockets are of equal value. The cabling can be carried out in any combination. Only the left and right sections may need to be differentiated. Examples of wiring can be found under examples.
+A bus is used to connect the components further away from the main board. All the required signals are routed in a single multi-core cable. An RJ45 cable is used for this. Starting from the main board, all components are connected to each other. The boxes have three sockets and can therefore be used as splitters. All sockets are of equal value. The cabling can be carried out in any combination. Only the left and right sections need to be differentiated as the disable buttons, the sensors and the supervision signals are direction dependent. Examples of wiring can be found below under examples.
 
 The socket is assigned as follows (view into the socket):
 
@@ -89,22 +89,22 @@ The socket is assigned as follows (view into the socket):
 | 8 | Current sensor |
 
 ### Enable box
-For manual operation of the railraod crossing a smal box is forseen. It contains the Enable (ET) and Disable (AT) push buttons as well as the shunting switch. The shunting switch can be equiped with an LED that blinks in phase with the flashing light signal.
+For manual operation of the railraod crossing a small box is needed. It contains the Enable (ET) and Disable (AT) push buttons as well as a shunting switch. The shunting switch can be equiped with an LED that blinks in phase with the flashing light signal to mark its use.
 
 ![Einschaltbox](/img/BUE_ET_Box.jpg)
 
 The box can be attached to modules using the well know FREMO-Clamps. The box contains a hole for that purpose.
 
-The connection from the box to the mainboard is realized using a conventional RJ-45 cable (straight) as it is know from computer networks. Each box has three equal sockets. Thus it can also be used as splitter for cabling.
+The connection from the box to the mainboard is through a RJ-45 cable (straight) as it is known from computer networks. Each box has three equal sockets. Thus it can also be used as splitter for cabling.
 
 ![Backside of box](/img/BUE_Distribution_Box.jpg)
 
-To ease the cabling inside the box, a smal PCB has been designed. It fits perfectly in the used boxes and provides space for the three RJ-45 sockets. In addition it providessoldering points for the push buttons and the LEDs.
+To ease the cabling inside the box, a small PCB has been designed. It fits perfectly in the boxes used and provides space for three RJ-45 sockets. In addition it provides soldering points for the push buttons and the LEDs.
 
 ![PCB for boxes](/img/BUE_Box-PCB.jpg)
 
 ### Current sensor
-The current sensor is based on the design of Reinhard Müller [http://dcc-mueller.de/wire4dcc/sensor_d.htm](http://dcc-mueller.de/wire4dcc/sensor_d.htm), that has been extended with a RJ-45 socket for the cabling system.
+The current sensor is based on the design of Reinhard Müller [http://dcc-mueller.de/wire4dcc/sensor_d.htm](http://dcc-mueller.de/wire4dcc/sensor_d.htm), that has been expanded with a RJ-45 socket for the crossing cabling system.
 
 ![Current sensor](/img/BUE_Currentsensor.jpg)
 
@@ -115,33 +115,33 @@ Near to the current sensor, a sensor box can be attached to the modules using FR
 
 ![Sensor box](/img/BUE_UT_Box.jpg)
 
-The main purpose of this box is to provide the disable push button near to the current sensor. By pressing the push button, the current sensor will be disabled for a give time span bevore it gets automatically enable again. A disabled current sensor is signaled by the LED in the box. Deactivation of the sensor can be necessary if there are shunting activities ongoing that would touch the module with the sensor without cthe need to close the railraod crossing.
+The main purpose of this box is to provide the disable button near to the current sensor. By pressing the push button, the current sensor will be disabled for a give time period. A disabled current sensor is signaled by the LED in the box. Deactivation of the sensor can be necessary if there are shunting activities ongoing that would touch the module with the sensor without the need to close the railway crossing.
 
 ### Supervision signal
-The engine driver needs to know if the railraod crossing is correctly secured. That is the purpose of the supervision signal that is placed after the current sensor that turns the railroad crossing on. If the railroad crossing is recured the signal is blinking.
+The engine driver needs to know if the railraod crossing is correctly enabled. That is the purpose of the supervision signal that is placed after the current sensor that turns the railroad crossing on. If the railroad crossing is enabled the signal will be blinking.
 
 ![Supervision signal](/img/BUE_Signal.jpg)
 
-The supervision signal is placed in a Wattenscheider signal carrier and thus can be placed in any module with the propper slot. The signal is connected to the main board using an RJ45-socket. If an additional marker light should be realised, there has to be a sperate power supply. This can exemplary be done by including a battery and a voltage regulator in the signal carrier.
+The supervision signal is placed in a Wattenscheider signal carrier and thus can be placed in any module with the propper Wattenscheiderslot. The signal is connected to the main board using an RJ45-socket. If an additional marker light should be realised, there has to be a sperate power supply. This can for example be done by including a battery and a voltage regulator in the signal carrier.
 
 ## Module setup
-The components presented before allow for a flexible setup. Two exemplary setups will be presented here.
+The components presented before allow for a flexible setup. Two example setups will be presented here.
 
 ### Railraod crossing on open track
-The most siple case is a railroad crossing on the open track. Therefore the main board is integrated in the module containing the railroad crossing. The flashing signal lights, maybe existing fences and the speaker are directly connected to the main board. Left and right to the railraod crossing on module in sufficient distance is choosen as a sensor module. One rail will be isolated from the other modules and will be supplied using a current sensor. The sensor is connected to the main board using RJ45-cables.
+The most simple case is a railway crossing on clear track. There the main board is integrated in the module which contains the railway crossing and crossing lights. The flashing signal lights, maybe existing fences and the speaker are then directly connected to the main board. Left and right of the railraod crossing on the module at a sufficient distance a sensor module is used. One rail will be isolated from the other modules and will be supplied through a current sensor. The sensor is connected to the main board using RJ45-cables.
 
 ![Setup at free track](/img/BUE_Scheme_Track.png)
 
-To connect the supervising signals it is recommended to install a sensor box near to each current sensor. The boxes are then used as splitters to connect both the current sensor and the signal.
+To connect the supervising signals it is recommended to install a sensor box near to every current sensor. The boxes are then used as splitters to connect both the current sensor and the signal.
 In this setup the railroad crossing is controlled only by the trains, no interaction of the driver is required.
 
 ### Railroad crossing at the end of a station
-The situation gets more complex if the railroad crossing is located at the end of a station where trains stop. In this case the railroad crossing can not only be automatically be engagend by a current sensor at the side of the station. This could be the case if a train approaches to station to make sure that the crossing is stil secured if the train does not correctly stop at the platform.
+The situation gets more complex if the railroway crossing is located at the end of a station where trains stop. In this case the railroad crossing can not only be automatically engaged by a current sensor at the side of the station. This could be the case if a train approaches to station to make sure that the crossing is stil secured if the train does not correctly stop at the platform.
 
 ![Setup in station](/img/BUE_Scheme_Station.png)
 
-As soon as the trains stops, the railroad crossing will be deactived manualy using the Einschaltbox to allow road users the drossing as long as the trains stops in the station. Bevore the trains continues the journey, the crossing has to be enabled again manually. Therefore an Einschaltbox is required in the station.
-In additon the box contains the shunting switch. This is enable if there are shunting activities ongoing that will touch the railraod crossing. The lights are then permanently enable and will only turn of after the switch has been taken back.
+As soon as the trains stops, the railway crossing will be deactivated manually using the Einschaltbox to allow road users to use the crossing when the train is stooped at station. Before the trains continue their journey, the crossing has to be enabled again manually. Therefore an Einschaltbox is required.
+In addition the box contains the shunting switch. This is switched on if there are shunting activities ongoing that will involve the railway crossing. The lights are then permanently switched on and will only turn off after the shunting switch has been switched off.
 
 
 
