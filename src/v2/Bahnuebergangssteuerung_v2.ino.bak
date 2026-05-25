@@ -1,12 +1,12 @@
-/* Level crossing controller v2.1.4 (C) Jens Becker
+/* Bahnuebergangsteuerung v2.1.4 (C) Jens Becker
  *  
- *  Supports only hardware version 03/21 of the BÜSte level crossing controller
+ *  Unterstützt nur die Hardware Version 03/21 der Bahnübergangssteuerung BÜSte
  *  
- *  Driver for the PWM chip from Adafruit https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/archive/master.zip
+ *  Treiber fuer den PWM-Chip von Adafruit https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/archive/master.zip
  * 
- *  Debouncing of the buttons with the Bounce2 library https://github.com/thomasfredericks/Bounce2
+ *  Debouncing der Tasten mit der Bounce2 Bibliothek https://github.com/thomasfredericks/Bounce2
  *
- *  Audio playback via DFPlayer mini MP3 module with PowerBroker2 library https://github.com/PowerBroker2/DFPlayerMini_Fast
+ *  Audiowiedergabe über DFPlayer mini MP3-Modul mit Bibliothek PowerBroker2 https://github.com/PowerBroker2/DFPlayerMini_Fast
  * 
  *  DFlayerMini_Fast library requires FireTimer lib https://github.com/PowerBroker2/FireTimer
  *
@@ -39,7 +39,7 @@
 //#  Version: 2.1.2 date: 2021/04/20 author: DKap
 //#
 //# Added:
-//#   - delay barrier implemended
+//#   - delay Schranke implemended
 //#
 //#-------------------------------------------------------------------------
 //#
@@ -80,7 +80,7 @@ const int VERSION_PATCH = 4;
 
 #include <EEPROM.h>
 
-#include <avr/pgmspace.h> // Needed to store values in FLASH
+#include <avr/pgmspace.h> // Wird zum Ablegen von Werten im FLASH benoetigt
 
 // PWM-Driver for PCA9685
 #include <Wire.h>
@@ -125,15 +125,15 @@ const int VERSION_PATCH = 4;
 
 #define SW_VERSION 1  // For EEPROM data, data will be set to default value is not the same
 
-// Output pins
-#define blink1_OUT 15     // where the first warning light is connected
-#define blink2_OUT 14     // where the second warning light is connected
-#define blink3_OUT 13     // where the third warning light is connected
-#define blink4_OUT 12     // where the fourth warning light is connected
-#define uebsig1_OUT 11    // where the right monitoring signal is connected
-#define uebsig2_OUT 10    // where the left monitoring signal is connected
-#define UT1_Status_OUT 9  // where the right UT status light is connected
-#define UT2_Status_OUT 8  // where the left UT status light is connected
+// Ausgangspins
+#define blink1_OUT 15     // hier wird das erste Blinklicht angeschlossen
+#define blink2_OUT 14     // hier wird das zweite Blinklicht angeschlossen
+#define blink3_OUT 13     // hier wird das dritte Blinklicht angeschlossen
+#define blink4_OUT 12     // hier wird das vierte Blinklicht angeschlossen
+#define uebsig1_OUT 11    // hier wird das rechte Ueberwachungssignal angeschlossen
+#define uebsig2_OUT 10    // hier wird das linke Ueberwachungssignal angeschlossen
+#define UT1_Status_OUT 9  // hier wird das rechte UT-Kontrolllicht angeschlossen
+#define UT2_Status_OUT 8  // hier wird das linke UT-Kontrolllicht angeschlossen
 
 #define NUM_OF_SCHRANKEN 4
 
@@ -141,38 +141,38 @@ const int VERSION_PATCH = 4;
 #define DFPlayer_RX A3
 #define DFPlayer_TX A2
 
-// Input pins
-#define ET_PIN 5                    // power-on button
-#define UT1_PIN 8                   // right disable button
-#define UT2_PIN 9                   // left disable button
-#define AT_PIN 6                    // power-off button
-#define RS_PIN 7                    // shunting switch
-#define Strom1_PIN 12               // right current sensor
-#define Strom2_PIN 11               // left current sensor
-#define LS_PIN 10                   // level crossing free signal (light barrier)
+// Eingangspins
+#define ET_PIN 5                    // Einschalttaster
+#define UT1_PIN 8                   // Unwirksamkeitstaster rechts
+#define UT2_PIN 9                   // Unwirksamkeitstaster links
+#define AT_PIN 6                    // Ausschalttaster
+#define RS_PIN 7                    // Rangierschalter
+#define Strom1_PIN 12               // Stromsensor rechts
+#define Strom2_PIN 11               // Stromsensor links
+#define LS_PIN 10                   // Freimeldung des Bahnübergangs (Lichtschranke)
 
-#define volume_PIN A6                // connection for the volume potentiometer
+#define volume_PIN A6                // Anschluss fuer den Poti zur Lautstärkeregelung
 
 // Define Button objects
-Bounce2::Button ET = Bounce2::Button();            // power-on button
-Bounce2::Button UT1 = Bounce2::Button();          // right disable button
-Bounce2::Button UT2 = Bounce2::Button();          // left disable button
-Bounce2::Button AT = Bounce2::Button();            // power-off button
-Bounce2::Button RS = Bounce2::Button();            // shunting switch
-Bounce2::Button Strom1 = Bounce2::Button();    // right current sensor
-Bounce2::Button Strom2 = Bounce2::Button();    // left current sensor
-Bounce2::Button LS = Bounce2::Button();           // level crossing free signal
+Bounce2::Button ET = Bounce2::Button();            // Einschalttaster
+Bounce2::Button UT1 = Bounce2::Button();          // Unwirksamkeitstaster rechts
+Bounce2::Button UT2 = Bounce2::Button();          // Unwirksamkeitstaster links
+Bounce2::Button AT = Bounce2::Button();            // Ausschalttaster
+Bounce2::Button RS = Bounce2::Button();            // Rangierschalter
+Bounce2::Button Strom1 = Bounce2::Button();    // Stromsensor rechts
+Bounce2::Button Strom2 = Bounce2::Button();    //Stromsensor links
+Bounce2::Button LS = Bounce2::Button();           // Freimeldung des Bahnübergangs
 
 
-// Variables for blink lighting
-int brightnessBlink1 = 0;      // brightness for the first warning light
-int brightnessBlink2 = 0;      // brightness for the second warning light
+// Variablen fuer das Blinklicht
+int brightnessBlink1 = 0;      // Helligkeit fuer das erste Blinklicht
+int brightnessBlink2 = 0;      // Helligkeit fuer das zweite Blinklicht
 int Index1 = 0;
 int Index2 = 0;
-const int periode = 1000;      // duration of a blink period
-boolean blinkLichtAn = false;  // blinker off at startup
-#define AN 4095                // PWM at maximum
-#define AUS 4096               // PWM off
+const int periode = 1000;      // Dauer einer Blinkperiode
+boolean blinkLichtAn = false;  // Blinklicht beim Start ausgeschaltet
+#define AN 4095                // PWM auf maximal
+#define AUS 4096               // PWM aus
 
 const PROGMEM byte sinus_tabelle[] = {
     0,  0,  0,  0,  1,  1,  1,  2,  2,  3,  4,  5,  5,  6,  7,  9,
@@ -193,26 +193,26 @@ const PROGMEM byte sinus_tabelle[] = {
    10,  9,  7,  6,  5,  5,  4,  3,  2,  2,  1,  1,  1,  0,  0,  0
 };
 
-/* Time constants
+/* Zeitkonstanten
 
-This section adjusts the timing behavior of the level crossing.
+Hier kann das Zeitverhalten des BUEs angepasst werden.
 
-- GrundstellerPeriod: time until the level crossing returns to its default position (open) after closing, if it was not occupied.
-- UTtimeoutPeriod:    time until the current sensor is reactivated after being disabled by a UT button.
-- FreiPeriod:         time within which the light barrier must trigger again; otherwise the crossing is reported free.
-- RuhezeitPeriod:     time during which the current sensor is ignored after opening. This prevents a departing train from causing the crossing to close again.
-- ServoDownIncrement: time delay increment for a barrier to start descending later than the first barrier.
+- GrundstellerPeriod: Zeit, nach der der BUE nach dem Schliessen wieder geoeffnet wird, wenn er nicht befahren wurde.
+- UTtimeoutPeriod:    Zeit, nachder der Stromsensor wieder aktiviert wird, wenn er mit UT deaktiviert wurde.
+- FreiPeriod:         Zeit, die hoechstens zwischen zwei Ausloesungen der Lichtschranke auf dem BUE liegen darf. Nach deren Ablauf wird der BUE frei gemeldet.
+- RuhezeitPeriod:     Zeit, waehrend der der Stromsensor nach dem Oeffnen deaktiviert ist. So soll verhindert werden, dass der abfahrende Zug den BUE wieder schliesst.
+- ServoDownIncrement  Zeit, die ein Servo später startet als der erste Vorgang um verzögerte Schranken zu erzeugen
 
 */
 
-const long GrundstellerPeriod = 300000;             // time until the level crossing returns to its default position (open)
-const long UTtimeoutPeriod = 120000;               // time until the disable button resets automatically
-const long FreiPeriod = 4000;                    // time within which the LS must trigger again; otherwise the crossing is marked free
-const long RuhezeitPeriod = 120000;                // time during which the crossing does not react to the current sensor after opening
-const long ServoDownIncrement = 250;            // time of an increment of delay for a barrier to go down later than the start time
+const long GrundstellerPeriod = 300000;             // Zeit bis zur Grundstellung des Bahnübergangs (öffnen)
+const long UTtimeoutPeriod = 120000;               // Zeit bis zum automatischen Rücknehmen der Unwirksamkeitstaste
+const long FreiPeriod = 4000;                    // Zeit, innerhalb der die LS erneut ausgeloest werden muss. Sonst wird BUE frei gemeldet
+const long RuhezeitPeriod = 120000;                // Zeit, innerhalb derer der BUE nach Oeffnen nicht auf den Stromsensor reagiert
+const long ServoDownIncrement = 250;            // time of an increment of delay for Schranken to go down later than the start time
 
-unsigned long currentMillis = 0;      // counter value at the last blink
-unsigned long previousUT1timeoutMillis = 0;  // stores the time when UT1 (right) timeout was last triggered
+unsigned long currentMillis = 0;      // Zaehlerstand beim letzten Blinken
+unsigned long previousUT1timeoutMillis = 0;  // speichert die Zeit, zu der der UT1 (rechts) Timeout zuletzt ausgeloest wurde
 unsigned long previousUT2timeoutMillis = 0;
 unsigned long previousGrundstellerMillis = 0; 
 unsigned long previousFreiMillis = 0;
@@ -224,16 +224,16 @@ boolean demoTheDelay = false;
 boolean isUT1TimeoutOn = false;
 boolean isUT2TimeoutOn = false;
 
-// Variables for the state machine
-uint8_t state = 1;                        // current state
-uint8_t next_state = 1;                   // next state
-uint8_t setup_servo = 0;                  //servo that is being set up
+// Variablen für den Zustandsautomaten
+uint8_t state = 1;                        // aktueller Zustand
+uint8_t next_state = 1;                   // nächster Zustand
+uint8_t setup_servo = 0;                  //servo that is being setup
 
-// Volume
+// Lautstärke
 int sensorValue = 0;  //value read from volume_PIN from 0 to 1023
 uint8_t volumeValue = 0;  //value for volume from 0 to 30
 
-//DFPlayer mini control
+//Ansteuerung DFPlayer mini
 SoftwareSerial mySoftwareSerial(DFPlayer_RX, DFPlayer_TX); // RX, TX
 
 #ifdef DFFast
@@ -242,19 +242,19 @@ SoftwareSerial mySoftwareSerial(DFPlayer_RX, DFPlayer_TX); // RX, TX
   DFRobotDFPlayerMini myDFPlayer;
 #endif
 
-// Define the PWM driver
+// Definieren des PWM-Treibers
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 typedef struct  {
-   int      PosUnten;        // position of the "down" setting
-   int      PosOben;         // position of the "up" setting  
-   int      updateInterval;   // how fast the barrier moves
+   int      PosUnten;        // Position der Stellung "Unten"
+   int      PosOben;         // Position der Stellung "Oben"  
+   int      updateInterval;   // wie schnell wird die Schranke bewegt
    uint8_t  downdelay;  //delayed start of servo down in 1 sec increments  
 } SchrankenDaten;
 
 typedef struct {
-  SchrankenDaten schranke[NUM_OF_SCHRANKEN];  // in this configuration up to eight barriers
+  SchrankenDaten schranke[NUM_OF_SCHRANKEN];  // in dieser Konfiguration maximal acht Schranken
 } EEPROMPayload ;
 
 typedef struct {
@@ -269,11 +269,11 @@ boolean schrankenHoch = true;
 
 typedef struct 
 {
-   uint8_t Pin;             // pin to which the barrier is connected
-   int Position;            // current position of the barrier
-   int Aenderung;           // position change per cycle
-   unsigned long previousSchrankeMillis = 0;  // last update of the position
-  //barriernDaten& daten;
+   uint8_t Pin;             // Pin, an den die Schranke angeschlossen ist
+   int Position;            // Aktuelle Position der Schranke
+   int Aenderung;           // Änderung der Position je Druchgang
+   unsigned long previousSchrankeMillis = 0;  // letzte Aktualisierung der Position
+  //SchrankenDaten& daten;
 } Schranke;
 
 Schranke Schrankenset[NUM_OF_SCHRANKEN];
@@ -346,7 +346,7 @@ void Sweep(uint8_t pin)
     Schrankenset[pin].previousSchrankeMillis = millis();
     Schrankenset[pin].Position += Schrankenset[pin].Aenderung;
     pwm.setPWM(Schrankenset[pin].Pin, 0, Schrankenset[pin].Position);
-    if ((Schrankenset[pin].Position > eepromData.payload.schranke[pin].PosOben) || (Schrankenset[pin].Position < eepromData.payload.schranke[pin].PosUnten))  // end of movement reached
+    if ((Schrankenset[pin].Position > eepromData.payload.schranke[pin].PosOben) || (Schrankenset[pin].Position < eepromData.payload.schranke[pin].PosUnten))  // Ende der Bewegung erreicht
     {
       // Richtung umkehren
       Schrankenset[pin].Aenderung = -Schrankenset[pin].Aenderung;
@@ -416,9 +416,9 @@ void schrankenbewegen() {
    }
 }
 
-uint8_t servoSetupState = 1;         // initial state for servo setup
+uint8_t servoSetupState = 1;         // Startzustand für die Einstellung der Servowerte
 
-boolean servoSetup = false;       // TRUE when servo positions should be adjusted
+boolean servoSetup = false;       // TRUE, wenn die Servopositionen eingestellt werden sollen
 
 
 // Funktion zum Blinken
@@ -443,7 +443,7 @@ void blinkLicht() {
     pwm.setPWM(uebsig2_OUT, 0, brightnessBlink2);
   }
   else {
-    // turn off warning lights
+    // Blinklichter ausschalten
     pwm.setPWM(blink1_OUT, 0, AUS);
     pwm.setPWM(blink2_OUT, 0, AUS);
     pwm.setPWM(blink3_OUT, 0, AUS);
@@ -459,12 +459,12 @@ void enableUT1timeout() {
 }
 
 boolean checkUT1timeout() {
-  // timer for UT1 timeout is running
+  // Timer fuer UT1-Timeout laeuft
   if (currentMillis - previousUT1timeoutMillis >= UTtimeoutPeriod) {
-    return true; // UT timeout is triggered
+    return true; // UT timeout wird ausgeloest
   }
   else {
-   return false; // no UT timeout 
+   return false; // kein UT timeout 
   }
 }
 
@@ -473,25 +473,25 @@ void enableUT2timeout() {
 }
 
 boolean checkUT2timeout() {
-  // timer for UT2 timeout is running
+  // Timer fuer UT2-Timeout laeuft
   if (currentMillis - previousUT2timeoutMillis >= UTtimeoutPeriod) {
-    return true; // UT timeout is triggered
+    return true; // UT timeout wird ausgeloest
   }
   else {
-   return false; // no UT timeout 
+   return false; // kein UT timeout 
   }
 }
 
 void setUTTimeout(uint8_t UTno) { 
     switch(UTno) {
       case 1 :
-        enableUT1timeout(); // activate UT1 timeout
+        enableUT1timeout(); // UT 1 Timeout aktivieren
         pwm.setPWM(UT1_Status_OUT, 0, AN);
         isUT1TimeoutOn = true;
         //DEBUG_PRINTDEC(UTno);
         break;
       case 2 :
-        enableUT2timeout(); // activate UT2 timeout
+        enableUT2timeout(); // UT 2 Timeout aktivieren
         pwm.setPWM(UT2_Status_OUT, 0, AN);
         isUT2TimeoutOn = true;
         //DEBUG_PRINTDEC(UTno);
@@ -530,10 +530,10 @@ void enableGrundsteller() {
 
 boolean checkGrundsteller() {
  if (currentMillis - previousGrundstellerMillis >= GrundstellerPeriod) {
-   return true; // default-return timeout triggered
+   return true; // Grundsteller Timeout ausgeloest
  }
  else {
-   return false; // no default-return timeout
+   return false; // kein Grundsteller Timeout
  }
 }
 
@@ -543,10 +543,10 @@ void enableRuhezeit() {
 
 boolean checkRuhezeit() {
   if (currentMillis - previousRuhezeitMillis >= RuhezeitPeriod) {
-    return true; // quiet period timeout triggered
+    return true; // Ruhezeit Timeout ausgeloest
   }
   else {
-    return false; // no quiet period timeout
+    return false; // kein Ruhezeit Timeout
   }
 }
 
@@ -585,28 +585,28 @@ void setup() {
   // put your setup code here, to run once:
 
   // BUTTON SETUP
-  ET.attach(ET_PIN, INPUT_PULLUP);            // power-on button
+  ET.attach(ET_PIN, INPUT_PULLUP);            // Einschalttaster
   ET.setPressedState(LOW);
-  UT1.attach(UT1_PIN, INPUT_PULLUP);          // right disable button
+  UT1.attach(UT1_PIN, INPUT_PULLUP);          // Unwirksamkeitstaster rechts
   UT1.setPressedState(LOW);
-  UT2.attach(UT2_PIN, INPUT_PULLUP);           // left disable button
+  UT2.attach(UT2_PIN, INPUT_PULLUP);           // Unwirksamkeitstaster links
   UT2.setPressedState(LOW);
-  AT.attach(AT_PIN, INPUT_PULLUP);             // power-off button
+  AT.attach(AT_PIN, INPUT_PULLUP);             // Ausschalttaster
   AT.setPressedState(LOW);
-  RS.attach(RS_PIN, INPUT_PULLUP);             // shunting switch
+  RS.attach(RS_PIN, INPUT_PULLUP);             // Rangierschalter
   RS.setPressedState(LOW);
-  Strom1.attach(Strom1_PIN, INPUT_PULLUP);     // right current sensor
+  Strom1.attach(Strom1_PIN, INPUT_PULLUP);     // Stromsensor rechts
   Strom1.setPressedState(LOW);
-  Strom2.attach(Strom2_PIN, INPUT_PULLUP);     //left current sensor
+  Strom2.attach(Strom2_PIN, INPUT_PULLUP);     //Stromsensor links
   Strom2.setPressedState(LOW);
 
 // Only one of the following two options should be active
-// light barrier HIGH active (e.g. IS 471)
-  LS.attach(LS_PIN, INPUT);            // light barrier HIGH active
-  LS.setPressedState(HIGH);            // light barrier HIGH active
-// light barrier LOW active
-//  LS.attach(LS_PIN, INPUT_PULLUP);     // light barrier LOW active
-//  LS.setPressedState(LOW);             // light barrier LOW active
+// Lichtschranke HIGH active (e.g. IS 471)
+  LS.attach(LS_PIN, INPUT);            // Lichtschranke HIGH active
+  LS.setPressedState(HIGH);            // Lichtschranke HIGH active
+// Lichtschranke LOW active
+//  LS.attach(LS_PIN, INPUT_PULLUP);     // Lichtschranke LOW active
+//  LS.setPressedState(LOW);             // Lichtschranke LOW active
 
 
   pinMode(volume_PIN, INPUT);
@@ -630,7 +630,7 @@ void setup() {
     }
   }
  
-  // read in volume pot and set DFPlayer volume
+  //read in volume poti and set DFPlayer volume
   sensorValue = analogRead(volume_PIN);
   volumeValue = map(sensorValue, 0, 1023, 0, 30); // Map analog input to volume of DFPlayer
 
@@ -659,7 +659,7 @@ void setup() {
   pwm.setPWM(UT1_Status_OUT, 0, AUS);
   pwm.setPWM(UT2_Status_OUT, 0, AUS);
 
-  if (digitalRead(UT1_PIN)==LOW || digitalRead(UT2_PIN)==LOW) {   // If one of the UT buttons is pressed at startup, the servo position setup routine starts
+  if (digitalRead(UT1_PIN)==LOW || digitalRead(UT2_PIN)==LOW) {   // Wird beim Start eine der UT-Tasten gedrückt, so beginnt die Routine für die Einstellung der Servo Positionen
     servoSetup = true;
     setup_servo = 99; 
     //set LEDS to setup indication 
@@ -700,7 +700,7 @@ void loop() {
   Strom2.update();
   LS.update();
   
-  // read in volume pot and set DFPlayer volume
+  //read in volume poti and set DFPlayer volume
   sensorValue = analogRead(volume_PIN);
   if (!(volumeValue == map(sensorValue, 0, 1023, 0, 30))) { //only on change
     volumeValue = map(sensorValue, 0, 1023, 0, 30);
@@ -709,11 +709,11 @@ void loop() {
     myDFPlayer.volume(volumeValue);  //Set volume value. From 0 to 30
   }
   
-  // save current time
+  // Aktuelle Zeit speichern
   currentMillis = millis();
 
   if (servoSetup == true) {
-    // servo position setup
+    // Einstellung der Servo Positionen
     //DEBUG_PRINTLN(servoSetupState);
     //DEBUG_PRINTLN(setup_servo);
    switch(setup_servo) {
@@ -723,14 +723,14 @@ void loop() {
       DEBUG_PRINTLN("up");
       servoSetupState = 1;
       setup_servo = 0;
-      pwm.setPWM(blink1_OUT, 0, AN); // on
-      pwm.setPWM(blink2_OUT, 0, AUS); // off
-      pwm.setPWM(blink3_OUT, 0, AUS); // off
-      pwm.setPWM(blink4_OUT, 0, AUS); // off
-      pwm.setPWM(uebsig1_OUT, 0, AN); // on indicate "down" setup
-      pwm.setPWM(uebsig2_OUT, 0, AUS); // off
-      pwm.setPWM(UT1_Status_OUT, 0, AUS); // off
-      pwm.setPWM(UT2_Status_OUT, 0, AUS); // off 
+      pwm.setPWM(blink1_OUT, 0, AN); // an
+      pwm.setPWM(blink2_OUT, 0, AUS); // aus
+      pwm.setPWM(blink3_OUT, 0, AUS); // aus
+      pwm.setPWM(blink4_OUT, 0, AUS); // aus
+      pwm.setPWM(uebsig1_OUT, 0, AN); // an Indicate "down" setup
+      pwm.setPWM(uebsig2_OUT, 0, AUS); // aus
+      pwm.setPWM(UT1_Status_OUT, 0, AUS); // aus
+      pwm.setPWM(UT2_Status_OUT, 0, AUS); // aus 
       }
     case 0 ... NUM_OF_SCHRANKEN:
     //case 1:
@@ -751,7 +751,7 @@ void loop() {
           if (UT1.pressed() || UT2.pressed() ) {
             DEBUG_PRINTLN("up");
             servoSetupState=2;
-            pwm.setPWM(uebsig1_OUT, 0, AUS); // off
+            pwm.setPWM(uebsig1_OUT, 0, AUS); // aus
             pwm.setPWM(uebsig2_OUT, 0, AN); // indicate "up" setup
             }
           break;
@@ -766,7 +766,7 @@ void loop() {
           if (UT1.pressed() || UT2.pressed() ) {
             DEBUG_PRINTLN("speed");
             servoSetupState=3;
-            pwm.setPWM(uebsig2_OUT, 0, AUS); // off
+            pwm.setPWM(uebsig2_OUT, 0, AUS); // aus
             pwm.setPWM(UT1_Status_OUT, 0, AN); // indicate speed setup
             }  
           break;
@@ -781,7 +781,7 @@ void loop() {
           if (UT1.pressed() || UT2.pressed() ) {
             DEBUG_PRINTLN("delay");
             servoSetupState=4;
-            pwm.setPWM(UT1_Status_OUT, 0, AUS); // off
+            pwm.setPWM(UT1_Status_OUT, 0, AUS); // aus
             pwm.setPWM(UT2_Status_OUT, 0, AN);  // delay setup step
             }  
           break;
@@ -798,22 +798,22 @@ void loop() {
             setup_servo++;
             if (setup_servo >= NUM_OF_SCHRANKEN) {setup_servo = 98;} //go to save the setup
             pwm.setPWM(uebsig1_OUT, 0, AN); // down stage setup
-            pwm.setPWM(UT2_Status_OUT, 0, AUS); // off
+            pwm.setPWM(UT2_Status_OUT, 0, AUS); // aus
             switch (setup_servo) {
               //case 0:
-              //  pwm.setPWM(blink1_OUT, 0, AN); // off
+              //  pwm.setPWM(blink1_OUT, 0, AN); // aus
               //break;
               case 1:
                 pwm.setPWM(blink1_OUT, 0, AUS); 
-                pwm.setPWM(blink2_OUT, 0, AN); // off
+                pwm.setPWM(blink2_OUT, 0, AN); // aus
               break;
               case 2:
                 pwm.setPWM(blink2_OUT, 0, AUS); 
-                pwm.setPWM(blink3_OUT, 0, AN); // off
+                pwm.setPWM(blink3_OUT, 0, AN); // aus
               break;
               case 3:  
                 pwm.setPWM(blink3_OUT, 0, AUS); 
-                pwm.setPWM(blink4_OUT, 0, AN); // off
+                pwm.setPWM(blink4_OUT, 0, AN); // aus
               break;
               }  
             }
@@ -832,14 +832,14 @@ void loop() {
         servoSetupState = 1;
         setup_servo = 0;
         state = 1;
-        pwm.setPWM(blink1_OUT, 0, AUS); // off
-        pwm.setPWM(blink2_OUT, 0, AUS); // off
-        pwm.setPWM(blink3_OUT, 0, AUS); // off
-        pwm.setPWM(blink4_OUT, 0, AUS); // off
-        pwm.setPWM(uebsig1_OUT, 0, AUS); // off
-        pwm.setPWM(uebsig2_OUT, 0, AUS); // off
-        pwm.setPWM(UT1_Status_OUT, 0, AUS); // off
-        pwm.setPWM(UT2_Status_OUT, 0, AUS); // off
+        pwm.setPWM(blink1_OUT, 0, AUS); // aus
+        pwm.setPWM(blink2_OUT, 0, AUS); // aus
+        pwm.setPWM(blink3_OUT, 0, AUS); // aus
+        pwm.setPWM(blink4_OUT, 0, AUS); // aus
+        pwm.setPWM(uebsig1_OUT, 0, AUS); // aus
+        pwm.setPWM(uebsig2_OUT, 0, AUS); // aus
+        pwm.setPWM(UT1_Status_OUT, 0, AUS); // aus
+        pwm.setPWM(UT2_Status_OUT, 0, AUS); // aus
       break;
     }
    }
@@ -849,44 +849,44 @@ void loop() {
  
    switch (state) {
     case 1:
-      // State: idle state
+      // Zustand: Ruhezustand
       
-      // state output
-      //DEBUG_PRINTLN("idle state");
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("Ruhezustand");
       
       if (RS.isPressed()) {
       //if (RS.pressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("1 idle state --> 2 close crossing for shunting");
+        DEBUG_PRINTLN("1 Ruhezustand --> 2 BÜ schließen rangieren");
         blinkLichtAn = true;
       }
       else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("1 idle state --> 3 close crossing normally, ET");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if ((isUT1TimeoutOn==false)&&(Strom1.pressed() || Strom1.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("1 idle state --> 3 close crossing normally, Strom1");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, Strom1");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if ((isUT2TimeoutOn==false)&&(Strom2.pressed() || Strom2.isPressed() )) {
         next_state = 3;
-        DEBUG_PRINTLN("1 idle state --> 3 close crossing normally, Strom2");
+        DEBUG_PRINTLN("1 Ruhezustand --> 3 BÜ schließen normal, Strom2");
         enableGrundsteller();
         blinkLichtAn = true;
       }
       else if (UT1.pressed()) {
         setUTTimeout(1);
         next_state = 1;
-        DEBUG_PRINTLN("1 idle state --> 1 idle state, UT1");
+        DEBUG_PRINTLN("1 Ruhezustand --> 1 Ruhezustand, UT1");
       }
       else if (UT2.pressed()) {
         setUTTimeout(2);
         next_state = 1;
-        DEBUG_PRINTLN("1 idle state --> 1 idle state, UT2");
+        DEBUG_PRINTLN("1 Ruhezustand --> 1 Ruhezustand, UT2");
       }
       
       else {
@@ -894,13 +894,13 @@ void loop() {
       }
       break;
     case 2:
-      // State: close crossing for shunting
-      // state output
+      // Zustand: BÜ schließen rangieren
+      // Zustandsausgabe
       //bin_out(state);
-      //DEBUG_PRINTLN("close crossing for shunting");
+      //DEBUG_PRINTLN("BÜ schließen rangieren");
       
       next_state = 4;
-      DEBUG_PRINTLN("2 close crossing for shunting --> 4 crossing closed for shunting");
+      DEBUG_PRINTLN("2 BÜ schließen rangieren --> 4 BÜ geschlossen rangieren");
       
       //start sound
       myDFPlayer.loop(1);
@@ -908,16 +908,16 @@ void loop() {
         myDFPlayer.startRepeatPlay();
       #endif
       schrankenHoch = false;
-      barriernSetDelay = true;
+      SchrankenSetDelay = true;
       
       break;
     case 3:
-      // State: close crossing normally
-      // state output
-      //DEBUG_PRINTLN("close crossing normally");
+      // Zustand: BÜ schließen normal
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("BÜ schließen normal");
       
       next_state = 5;
-      DEBUG_PRINTLN("3 close crossing normally -->5 crossing closed normally");
+      DEBUG_PRINTLN("3 BÜ schließen normal -->5 BÜ geschlossen normal");
       
       //start sound
       //DEBUG_PRINTLN("Snd: loop");
@@ -927,14 +927,14 @@ void loop() {
       #endif
       
       schrankenHoch = false;
-      barriernSetDelay = true;
+      SchrankenSetDelay = true;
       
       break;
     case 4:
-      // State: crossing closed for shunting
-      // state output
+      // Zustand: BÜ geschlossen rangieren
+      // Zustandsausgabe
       //bin_out(state);
-      //DEBUG_PRINTLN("crossing closed for shunting");
+      //DEBUG_PRINTLN("BÜ geschlossen rangieren");
       
       if (RS.isPressed()) {
         next_state = 4;
@@ -942,56 +942,56 @@ void loop() {
       }
       else {
        next_state = 9; 
-       DEBUG_PRINTLN("4 crossing closed for shunting --> 9 open crossing rangieren");
+       DEBUG_PRINTLN("4 BÜ geschlossen rangieren --> 9 BÜ öffnen rangieren");
       }
       
       break;
     case 5:
-      // State: crossing closed normally
-      // state output
-      //DEBUG_PRINTLN("crossing closed normally");
+      // Zustand: BÜ geschlossen normal
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("BÜ geschlossen normal");
       
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("5 crossing closed normally --> 4 crossing closed for shunting");
+        DEBUG_PRINTLN("5 BÜ geschlossen normal --> 4 BÜ geschlossen rangieren");
       }
       else if (LS.pressed()) {
        next_state = 6; 
-       DEBUG_PRINTLN("5 crossing closed normally --> 6 BÜ geschlossen befahren");
+       DEBUG_PRINTLN("5 BÜ geschlossen normal --> 6 BÜ geschlossen befahren");
        enableFrei();
       }
       else if (AT.pressed() || checkGrundsteller() == true) {
         next_state = 7;
-        DEBUG_PRINTLN("5 crossing closed normally --> 7 open crossing, AT");
+        DEBUG_PRINTLN("5 BÜ geschlossen normal --> 7 BÜ öffnen, AT");
       }
       else {
         next_state = 5;
       }
       break;
     case 6:
-      // State: crossing closed, occupied
-      // state output
-      //DEBUG_PRINTLN("crossing closed, occupied");
+      // Zustand: BÜ geschlossen, befahren
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("BÜ geschlossen, befahren");
     
       if (RS.isPressed()) {
         next_state = 4;
-        DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 4 crossing closed for shunting, RS");
+        DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 4 BÜ geschlossen rangieren, RS");
       }
       else if (checkFrei()==true) {
        next_state = 7; 
-       DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 7 open crossing");
+       DEBUG_PRINTLN("6 BÜ geschlossen befahren --> 7 BÜ öffnen");
       }
       else {
         next_state = 6;
       }
       break;
     case 7:
-      // State: open crossing
-      // state output
-      //DEBUG_PRINTLN("open crossing");
+      // Zustand: BÜ öffnen
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("BÜ öffnen");
       
       next_state = 8;
-      DEBUG_PRINTLN("7 open crossing --> 8 quiet period");
+      DEBUG_PRINTLN("7 BÜ öffnen --> 8 Ruhezeit");
       blinkLichtAn = false;
       
       schrankenHoch = true;
@@ -1000,28 +1000,28 @@ void loop() {
       //myDFPlayer.play(1);
       myDFPlayer.stop();
       
-      enablequiet period();  // Starte Timer fuer quiet period
+      enableRuhezeit();  // Starte Timer fuer Ruhezeit
       
       break;
     case 8:
-      // State: quiet period
-      // state output
-      //DEBUG_PRINTLN("quiet period");
+      // Zustand: Ruhezeit
+      // Zustandsausgabe
+      //DEBUG_PRINTLN("Ruhezeit");
       
       if (RS.isPressed()) {
         next_state = 2;
-        DEBUG_PRINTLN("8 quiet period -->2 close crossing for shunting, RS");
+        DEBUG_PRINTLN("8 Ruhezeit -->2 BÜ schließen rangieren, RS");
         blinkLichtAn = true;
       }
       else if (ET.pressed()) {
         next_state = 3;
-        DEBUG_PRINTLN("8 quiet period -->3 close crossing normally, ET");
+        DEBUG_PRINTLN("8 Ruhezeit -->3 BÜ schließen normal, ET");
         enableGrundsteller();
         blinkLichtAn = true;
       }
-      else if (checkquiet period()==true) {
+      else if (checkRuhezeit()==true) {
         next_state = 1;
-        DEBUG_PRINTLN("8 quiet period --> 1 idle state");
+        DEBUG_PRINTLN("8 Ruhezeit --> 1 Ruhezustand");
       }
       else if (UT1.pressed()) {
         setUTTimeout(1);
@@ -1035,12 +1035,12 @@ void loop() {
         
       break;
     case 9:
-      // State: open crossing for shunting
-      // state output
-      //DEBUG_PRINTLN("open crossing, rangieren");
+      // Zustand: BUE oeffnen, rangieren
+      // Zustandausgabe
+      //DEBUG_PRINTLN("BÜ öffnen, rangieren");
       
       next_state = 1;
-      DEBUG_PRINTLN("9 open crossing rangieren --> 1 idle state");
+      DEBUG_PRINTLN("9 BÜ öffnen rangieren --> 1 Ruhezustand");
       blinkLichtAn = false;
       
       schrankenHoch = true;
@@ -1051,7 +1051,7 @@ void loop() {
       break;
   }
   
-  // perform state transition
+  // Zustandswechsel durchfuehren
   state = next_state;
  
   blinkLicht();
